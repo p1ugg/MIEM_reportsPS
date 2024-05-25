@@ -67,7 +67,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="text_report">
+      <widget class="QPushButton" name="text_reports">
        <property name="minimumSize">
         <size>
          <width>250</width>

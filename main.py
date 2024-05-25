@@ -10,34 +10,62 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 BOOKS = pd.read_excel('./data.xlsx')
 
+from text_reports import *
+
+
+
 class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('main.ui', self)
-        # self.dataset_view.clicked.connect(self.dataset_view1)
+
         self.graphic_report.clicked.connect(self.open_graphic_report)
+
         self.dataset_view = self.findChild(QPushButton, 'dataset_view')
         self.dataset_view.clicked.connect(self.show_dataset_view)
 
-    def dataset_view1(self):
-        self.dataset_window = DatasetView()
-        self.dataset_window.show()
+        self.text_reports = self.findChild(QPushButton, 'text_reports')
+        self.text_reports.clicked.connect(self.open_text_reports)
 
     def show_dataset_view(self):
         self.dataset_window = DatasetView(BOOKS)
         self.dataset_window.show()
 
     def open_graphic_report(self):
-        # Логика для открытия отчета или другого окна
-        print("Graphic report button clicked")
-        # Пример:
         self.graphic_window = GraphicReportView()
         self.graphic_window.show()
+
+    def open_text_reports(self):
+        self.text_reports_window = TextReportsView()
+        self.text_reports_window.show()
+
+
+class TextReportsView(QDialog):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('text_reports.ui', self)
+        self.tr1 = self.findChild(QPushButton, 'tr1')
+        self.tr1.clicked.connect(self.tr1_clicked)
+
+    def tr1_clicked(self):
+        self.text_report1_view = TextReport1View(get_most_expensive_books(BOOKS, 10))
+        self.text_report1_view.show()
+
+
+class TextReport1View(QDialog):
+    def __init__(self, df):
+        super().__init__()
+        uic.loadUi('text_report.ui', self)
+
+        # Настройка QTableView
+        self.text_report_view = self.findChild(QTableView, 'text_report_view')
+        self.model = PandasModel(df)
+        self.text_report_view.setModel(self.model)
 
 
 class PandasModel(QAbstractTableModel):
     def __init__(self, df=pd.DataFrame(), parent=None):
-        QAbstractTableModel.__init__(self, parent)
+        super().__init__(parent)
         self._df = df
 
     def rowCount(self, parent=None):
