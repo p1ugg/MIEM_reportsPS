@@ -8,10 +8,10 @@ from PyQt5.QtCore import QAbstractTableModel, Qt
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
 BOOKS = pd.read_excel('./data.xlsx')
 
 from text_reports import *
-
 
 
 class MyWidget(QMainWindow):
@@ -47,12 +47,33 @@ class TextReportsView(QDialog):
         self.tr1 = self.findChild(QPushButton, 'tr1')
         self.tr1.clicked.connect(self.tr1_clicked)
 
+        self.tr2 = self.findChild(QPushButton, 'tr2')
+        self.tr2.clicked.connect(self.tr2_clicked)
+
+        self.tr3 = self.findChild(QPushButton, 'tr3')
+        self.tr3.clicked.connect(self.tr3_clicked)
+
+        self.tr4 = self.findChild(QPushButton, 'tr4')
+        self.tr4.clicked.connect(self.tr4_clicked)
+
     def tr1_clicked(self):
-        self.text_report1_view = TextReport1View(get_most_expensive_books(BOOKS, 10))
+        self.text_report1_view = TextReportView(get_most_expensive_books(BOOKS, 10))
         self.text_report1_view.show()
 
+    def tr2_clicked(self):
+        self.text_report2_view = TextReportView(get_most_discussed_authors(BOOKS, 20))
+        self.text_report2_view.show()
 
-class TextReport1View(QDialog):
+    def tr3_clicked(self):
+        self.text_report3_view = TextReportView(get_average_rating_by_country(BOOKS))
+        self.text_report3_view.show()
+
+    def tr4_clicked(self):
+        self.text_report4_view = TextReportView(get_average_price_per_year(BOOKS, 2009, 2018))
+        self.text_report4_view.show()
+
+
+class TextReportView(QDialog):
     def __init__(self, df):
         super().__init__()
         uic.loadUi('text_report.ui', self)
@@ -99,15 +120,22 @@ class DatasetView(QDialog):
         self.model = PandasModel(df)
         self.dataset_view.setModel(self.model)
 
+
 class GraphicReportView(QDialog):
     def __init__(self):
         super().__init__()
         uic.loadUi('graphic_reports.ui', self)
         self.kach_kach.clicked.connect(self.kach_kach_clicked)
+        self.kol_kach.clicked.connect(self.kol_kach_clicked)
+
 
     def kach_kach_clicked(self):
         self.kach_kach_window = GraphicsReport_kach_kach()
         self.kach_kach_window.show()
+
+    def kol_kach_clicked(self):
+        self.kol_kach_window = GraphicsReport_kol_kach()
+        self.kol_kach_window.show()
 
 
 class GraphicsReport_kach_kach(QDialog):
@@ -123,6 +151,7 @@ class GraphicsReport_kach_kach(QDialog):
         self.build_window = GraphicsReport_kach_kach_View(first_param, second_param)
         self.build_window.show()
 
+
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -135,7 +164,6 @@ class GraphicsReport_kach_kach_View(QDialog):
         super().__init__()
         self.first_param = first_param
         self.second_param = second_param
-
 
         self.setWindowTitle('Качественный-Качественный')
         self.setGeometry(100, 100, 800, 600)
@@ -167,6 +195,86 @@ class GraphicsReport_kach_kach_View(QDialog):
 
 
 
+class GraphicsReport_kol_kach(QDialog):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('kol_kach_window.ui', self)
+        self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
+
+    def bulid_btn_clicked(self):
+        selected_text = self.comboBox.currentText().split(' - ')
+        first_param, second_param = selected_text[0], selected_text[1]
+
+        self.build_window = GraphicsReport_kol_kach_View(first_param, second_param)
+        self.build_window.show()
+
+class GraphicsReport_kol_kach_View(QDialog):
+    def __init__(self, first_param, second_param):
+        super().__init__()
+        self.first_param = first_param
+        self.second_param = second_param
+
+        self.setWindowTitle('Количественный-Качественный')
+        self.setGeometry(100, 100, 800, 600)
+
+        sc = MplCanvas(self, width=5, height=4, dpi=100)
+
+        # Пример данных и создание DataFrame
+        data = {
+            self.first_param: BOOKS[self.first_param],
+            self.second_param: BOOKS[self.second_param]
+        }
+        df = pd.DataFrame(data)
+
+        if 'Country' in (self.first_param, self.second_param):
+            df = df[df['Country'] != 'USA']
+
+        for category in df[self.second_param].unique():
+            subset = df[df[self.second_param] == category]
+            sc.axes.hist(subset[self.first_param], alpha=0.5, label=category)
+
+        sc.axes.set_xlabel(self.first_param)
+        sc.axes.set_ylabel('Frequency')
+        sc.axes.set_title(f'Categorized Histogram for {self.first_param} by {self.second_param}')
+        sc.axes.legend(title=self.second_param)
+
+        layout = QVBoxLayout()
+        layout.addWidget(sc)
+        self.setLayout(layout)
+
+# class GraphicsReport_kol_kach_View(QDialog):
+#     def __init__(self, first_param, second_param):
+#         super().__init__()
+#         self.first_param = first_param
+#         self.second_param = second_param
+#
+#         self.setWindowTitle('Количественный-Качественный')
+#         self.setGeometry(100, 100, 800, 600)
+#
+#         sc = MplCanvas(self, width=5, height=4, dpi=100)
+#
+#         # Пример данных и создание DataFrame
+#         data = {
+#             self.first_param: BOOKS[self.first_param],
+#             self.second_param: BOOKS[self.second_param]
+#         }
+#         df = pd.DataFrame(data)
+#         # Исключение данных по стране "США"
+#         df = df[df[self.first_param] != 'USA']
+#         df = df[df[self.second_param] != 'USA']
+#         count_data = df.groupby([self.first_param, self.second_param]).size().unstack()
+#
+#         # Создание кластеризованной столбчатой диаграммы
+#         count_data.plot(kind='bar', stacked=False, ax=sc.axes)
+#         sc.axes.set_xlabel(self.first_param)
+#         sc.axes.set_ylabel(self.second_param)
+#         sc.axes.set_title(f'Clustered Bar Chart for {self.first_param} and {self.second_param}')
+#         sc.axes.legend(title=self.second_param)
+#
+#         layout = QVBoxLayout()
+#         layout.addWidget(sc)
+#
+#         self.setLayout(layout)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
