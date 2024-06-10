@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QDialog, QVBoxLayout, QLabel, QTableView, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QDialog, QVBoxLayout, QLabel, QTableView, QWidget, QTextEdit
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -57,31 +57,56 @@ class TextReportsView(QDialog):
         self.tr4.clicked.connect(self.tr4_clicked)
 
     def tr1_clicked(self):
-        self.text_report1_view = TextReportView(get_most_expensive_books(BOOKS, 10))
+        self.text_report1_view = TextReportView12(1)
         self.text_report1_view.show()
 
+
     def tr2_clicked(self):
-        self.text_report2_view = TextReportView(get_most_discussed_authors(BOOKS, 20))
+        self.text_report2_view = TextReportView12(2)
         self.text_report2_view.show()
 
     def tr3_clicked(self):
-        self.text_report3_view = TextReportView(get_average_rating_by_country(BOOKS))
+        self.text_report3_view = TextReportView34(get_average_rating_by_country(BOOKS))
         self.text_report3_view.show()
 
     def tr4_clicked(self):
-        self.text_report4_view = TextReportView(get_average_price_per_year(BOOKS, 2009, 2018))
+        self.text_report4_view = TextReportView34(get_average_price_per_year(BOOKS, 2009, 2019))
         self.text_report4_view.show()
 
 
-class TextReportView(QDialog):
-    def __init__(self, df):
+class TextReportView12(QDialog):
+    def __init__(self, num):
         super().__init__()
         uic.loadUi('text_report.ui', self)
+        self.num = num
+        self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
+
+    def bulid_btn_clicked(self):
+        # Настройка QTableView
+        N = self.nLine.toPlainText()
+        print(N)
+        self.text_report_view = self.findChild(QTableView, 'text_report_view')
+        if self.num == 1:
+            self.df = get_most_expensive_books(BOOKS, int(N))
+        elif self.num == 2:
+            self.df = get_most_discussed_authors(BOOKS,  int(N))
+        self.model = PandasModel(self.df)
+        self.text_report_view.setModel(self.model)
+
+class TextReportView34(QDialog):
+    def __init__(self, df):
+        super().__init__()
+        uic.loadUi('text_report3.ui', self)
+        self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
+        self.df = df
+
+    def bulid_btn_clicked(self):
 
         # Настройка QTableView
         self.text_report_view = self.findChild(QTableView, 'text_report_view')
-        self.model = PandasModel(df)
+        self.model = PandasModel(self.df)
         self.text_report_view.setModel(self.model)
+
 
 
 class PandasModel(QAbstractTableModel):
