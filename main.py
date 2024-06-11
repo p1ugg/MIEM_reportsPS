@@ -8,8 +8,7 @@ from PyQt5.QtCore import QAbstractTableModel, Qt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from Library.text_reports import *
-
+from Scripts.text_reports import *
 
 BOOKS = pd.read_excel('./Data/data.xlsx')
 
@@ -292,7 +291,7 @@ class GraphicsReport_kach_kach(QDialog):
 
 
 class MplCanvas(FigureCanvas):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=10, height=8, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
@@ -305,9 +304,12 @@ class GraphicsReport_kach_kach_View(QDialog):
         self.second_param = second_param
 
         self.setWindowTitle('Качественный-Качественный')
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 800)
 
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
+        self.ScreenBtn = QPushButton()
+        self.ScreenBtn.setGeometry(1, 1, 100, 50)
+        self.ScreenBtn.setText('screen')
+        sc = MplCanvas(self, width=10, height=8, dpi=100)
 
         # Пример данных и создание DataFrame
         data = {
@@ -354,7 +356,7 @@ class GraphicsReport_kol_kach_View(QDialog):
         self.second_param = second_param
 
         self.setWindowTitle('Количественный-Качественный')
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 800)
 
         sc = MplCanvas(self, width=5, height=4, dpi=100)
 
@@ -380,7 +382,6 @@ class GraphicsReport_kol_kach_View(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(sc)
         self.setLayout(layout)
-
 
 
 if __name__ == "__main__":
