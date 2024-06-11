@@ -1,25 +1,23 @@
 import sys
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QDialog, QVBoxLayout, QLabel, QTableView, QWidget, \
-    QTextEdit
-import pandas as pd
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QDialog, QVBoxLayout, QTableView, QWidget
 import seaborn as sns
 
-import matplotlib.pyplot as plt
 from PyQt5.QtCore import QAbstractTableModel, Qt
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-BOOKS = pd.read_excel('./data.xlsx')
+from Library.text_reports import *
 
-from text_reports import *
+
+BOOKS = pd.read_excel('./Data/data.xlsx')
 
 
 class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('main.ui', self)
+        uic.loadUi('Scripts/main.ui', self)
 
         self.graphic_report.clicked.connect(self.open_graphic_report)
 
@@ -45,7 +43,7 @@ class MyWidget(QMainWindow):
 class TextReportsView(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('text_reports.ui', self)
+        uic.loadUi('Scripts/text_reports.ui', self)
         self.tr1 = self.findChild(QPushButton, 'tr1')
         self.tr1.clicked.connect(self.tr1_clicked)
 
@@ -78,7 +76,7 @@ class TextReportsView(QDialog):
 class TextReportView12(QDialog):
     def __init__(self, num):
         super().__init__()
-        uic.loadUi('text_report.ui', self)
+        uic.loadUi('Scripts/text_report.ui', self)
         self.num = num
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
@@ -102,7 +100,7 @@ class TextReportView12(QDialog):
 class TextReportView34(QDialog):
     def __init__(self, df):
         super().__init__()
-        uic.loadUi('text_report3.ui', self)
+        uic.loadUi('Scripts/text_report3.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
         self.df = df
 
@@ -142,7 +140,7 @@ class PandasModel(QAbstractTableModel):
 class DatasetView(QDialog):
     def __init__(self, df):
         super().__init__()
-        uic.loadUi('dataset_.ui', self)
+        uic.loadUi('Scripts/dataset_.ui', self)
 
         # Настройка QTableView
         self.dataset_view = self.findChild(QTableView, 'dataset_view')
@@ -153,7 +151,7 @@ class DatasetView(QDialog):
 class GraphicReportView(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('graphic_reports.ui', self)
+        uic.loadUi('Scripts/graphic_reports.ui', self)
         self.kach_kach.clicked.connect(self.kach_kach_clicked)
         self.kol_kach.clicked.connect(self.kol_kach_clicked)
         self.baw_kol_kach.clicked.connect(self.baw_kol_kach_clicked)
@@ -179,7 +177,7 @@ class GraphicReportView(QDialog):
 class GraphicsReport_twokol_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('2kol_kach_window.ui', self)
+        uic.loadUi('Scripts/2kol_kach_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -232,7 +230,7 @@ class GraphicsReport_twokol_kach_View(QWidget):
 class GraphicsReport_baw_kol_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('kol_kach_baw_window.ui', self)
+        uic.loadUi('Scripts/kol_kach_baw_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -283,7 +281,7 @@ class GraphicsReport_baw_kol_kach_View(QWidget):
 class GraphicsReport_kach_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('kach_kach_window.ui', self)
+        uic.loadUi('Scripts/kach_kach_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -338,7 +336,7 @@ class GraphicsReport_kach_kach_View(QDialog):
 class GraphicsReport_kol_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('kol_kach_window.ui', self)
+        uic.loadUi('Scripts/kol_kach_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -384,39 +382,6 @@ class GraphicsReport_kol_kach_View(QDialog):
         self.setLayout(layout)
 
 
-# class GraphicsReport_kol_kach_View(QDialog):
-#     def __init__(self, first_param, second_param):
-#         super().__init__()
-#         self.first_param = first_param
-#         self.second_param = second_param
-#
-#         self.setWindowTitle('Количественный-Качественный')
-#         self.setGeometry(100, 100, 800, 600)
-#
-#         sc = MplCanvas(self, width=5, height=4, dpi=100)
-#
-#         # Пример данных и создание DataFrame
-#         data = {
-#             self.first_param: BOOKS[self.first_param],
-#             self.second_param: BOOKS[self.second_param]
-#         }
-#         df = pd.DataFrame(data)
-#         # Исключение данных по стране "США"
-#         df = df[df[self.first_param] != 'USA']
-#         df = df[df[self.second_param] != 'USA']
-#         count_data = df.groupby([self.first_param, self.second_param]).size().unstack()
-#
-#         # Создание кластеризованной столбчатой диаграммы
-#         count_data.plot(kind='bar', stacked=False, ax=sc.axes)
-#         sc.axes.set_xlabel(self.first_param)
-#         sc.axes.set_ylabel(self.second_param)
-#         sc.axes.set_title(f'Clustered Bar Chart for {self.first_param} and {self.second_param}')
-#         sc.axes.legend(title=self.second_param)
-#
-#         layout = QVBoxLayout()
-#         layout.addWidget(sc)
-#
-#         self.setLayout(layout)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
