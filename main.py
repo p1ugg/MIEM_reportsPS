@@ -159,7 +159,7 @@ class TextReportView34(QDialog):
         screenshot.save(screenshot_path)
 
 
-# Это таблица, в которую вставляется датафрейм
+# Это таблица , в которую вставляется датафрейм
 class PandasModel(QAbstractTableModel):
     def __init__(self, df=pd.DataFrame(), parent=None):
         super().__init__(parent)
