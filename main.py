@@ -1,9 +1,13 @@
+import os
 import sys
+from datetime import datetime
+
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QDialog, QVBoxLayout, QTableView, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QDialog, QVBoxLayout, QTableView, QWidget, \
+    QHBoxLayout
 import seaborn as sns
 
-from PyQt5.QtCore import QAbstractTableModel, Qt
+from PyQt5.QtCore import QAbstractTableModel, Qt, QRect
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -78,12 +82,12 @@ class TextReportsView(QDialog):
 
     # Функция, обрабатывающая нажатие на текстовый отчет №3
     def tr3_clicked(self):
-        self.text_report3_view = TextReportView34(get_average_rating_by_country(BOOKS))
+        self.text_report3_view = TextReportView34(get_average_rating_by_country(BOOKS), 3)
         self.text_report3_view.show()
 
     # Функция, обрабатывающая нажатие на текстовый отчет №4
     def tr4_clicked(self):
-        self.text_report4_view = TextReportView34(get_average_price_per_year(BOOKS, 2009, 2019))
+        self.text_report4_view = TextReportView34(get_average_price_per_year(BOOKS, 2009, 2019), 4)
         self.text_report4_view.show()
 
 
@@ -96,23 +100,26 @@ class TextReportView12(QDialog):
         # Num - это номер отчета (1 или 2), который передали как параметр
         self.num = num
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
+        self.ScreenBtn.clicked.connect(self.save_screenshot)
 
-    # Обратчик кнопки "Построить"
+
+
+    # Обработчик кнопки "Построить"
     def bulid_btn_clicked(self):
         # Настройка QTableView
         # Берем N из ячейки
-        N = self.nLine.toPlainText()
+        self.N = self.nLine.toPlainText()
 
         try:
             # Проверяем N на корректность
-            if 2 <= int(N) <= 550:
+            if 2 <= int(self.N) <= 550:
                 self.text_report_view = self.findChild(QTableView, 'text_report_view')
                 """ Если все окей, то мы смотрим какой номер текстового отчета выбрал пользователь и в зависимости от
-                 этого получаем нужный датафрейм из скрипта text_reports.py"""
+                этого получаем нужный датафрейм из скрипта text_reports.py"""
                 if self.num == 1:
-                    self.df = get_most_expensive_books(BOOKS, int(N))
+                    self.df = get_most_expensive_books(BOOKS, int(self.N))
                 elif self.num == 2:
-                    self.df = get_most_discussed_authors(BOOKS, int(N))
+                    self.df = get_most_discussed_authors(BOOKS, int(self.N))
                 # Подгружаем окно где будет отображаться датафрейм
                 self.model = PandasModel(self.df)
                 self.text_report_view.setModel(self.model)
@@ -121,15 +128,22 @@ class TextReportView12(QDialog):
             # Если ошибка в данных, то ничего не выводим
             pass
 
+    def save_screenshot(self):
+        os.makedirs("Output", exist_ok=True)
+        screenshot_path = os.path.join("Output", f"Текстовый отчет №{self.num}_N{self.N}.png")
+        screenshot = self.grab()
+        screenshot.save(screenshot_path)
 
 # Окно, в котором отображаются текстовые отчеты №3 и №4
 class TextReportView34(QDialog):
-    def __init__(self, df):
+    def __init__(self, df, num):
         super().__init__()
         # Подгружаем интерфейс с text_report3.ui
         uic.loadUi('UI/text_report3.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
+        self.ScreenBtn.clicked.connect(self.save_screenshot)
         self.df = df
+        self.num = num
 
     # Обратчик кнопки "Построить"
     def bulid_btn_clicked(self):
@@ -137,6 +151,12 @@ class TextReportView34(QDialog):
         self.text_report_view = self.findChild(QTableView, 'text_report_view')
         self.model = PandasModel(self.df)
         self.text_report_view.setModel(self.model)
+
+    def save_screenshot(self):
+        os.makedirs("Output", exist_ok=True)
+        screenshot_path = os.path.join("Output", f"Текстовый отчет №{self.num}.png")
+        screenshot = self.grab()
+        screenshot.save(screenshot_path)
 
 
 # Это таблица, в которую вставляется датафрейм
@@ -245,6 +265,12 @@ class GraphicsReport_twokol_kach_View(QWidget):
         self.canvas = MplCanvas(self)
         self.layout.addWidget(self.canvas)
 
+        # Добавляем кнопку для скриншота
+        self.ScreenBtn = QPushButton('screen', self)
+        self.ScreenBtn.setGeometry(QRect(10, 10, 100, 50))
+        self.ScreenBtn.clicked.connect(self.save_screenshot)
+        self.layout.addWidget(self.ScreenBtn)
+
         # Строим график
         self.plot()
 
@@ -266,6 +292,13 @@ class GraphicsReport_twokol_kach_View(QWidget):
 
         # Обновление холста
         self.canvas.draw()
+
+    def save_screenshot(self):
+        os.makedirs("Graphics", exist_ok=True)
+        screenshot_path = os.path.join("Graphics", f"2Кол-Кач_{self.first_param}-{self.second_param}-{self.third_param}.png")
+        screenshot = self.grab()
+        screenshot.save(screenshot_path)
+        print(f"Screenshot saved to {screenshot_path}")
 
 
 # Окно с параметрами графического отчета №3
@@ -298,6 +331,12 @@ class GraphicsReport_baw_kol_kach_View(QWidget):
         self.canvas = MplCanvas(self)
         self.layout.addWidget(self.canvas)
 
+        # Добавляем кнопку для скриншота
+        self.ScreenBtn = QPushButton('screen', self)
+        self.ScreenBtn.setGeometry(QRect(10, 10, 100, 50))
+        self.ScreenBtn.clicked.connect(self.save_screenshot)
+        self.layout.addWidget(self.ScreenBtn)
+
         # Строим график
         self.plot()
 
@@ -313,11 +352,17 @@ class GraphicsReport_baw_kol_kach_View(QWidget):
         df.boxplot(column=self.first_param, by=self.second_param, vert=False, ax=self.canvas.axes)
         self.canvas.axes.set_xlabel(self.first_param)
         self.canvas.axes.set_ylabel(self.second_param)
-        self.canvas.axes.set_title(
-            f'Categorized Box-and-Whiskers Diagram for {self.first_param} by {self.second_param}')
+        self.canvas.axes.set_title(f'Categorized Box-and-Whiskers Diagram for {self.first_param} by {self.second_param}')
 
         # Обновление холста
         self.canvas.draw()
+
+    def save_screenshot(self):
+        os.makedirs("Graphics", exist_ok=True)
+        screenshot_path = os.path.join("Graphics", f"Кол-Кач-BAW_{self.first_param}-{self.second_param}.png")
+        screenshot = self.grab()
+        screenshot.save(screenshot_path)
+        print(f"Screenshot saved to {screenshot_path}")
 
 
 # Окно с параметрами графического отчета №1
@@ -354,9 +399,9 @@ class GraphicsReport_kach_kach_View(QDialog):
 
         sc = MplCanvas(self, width=10, height=8, dpi=100)
 
-        self.ScreenBtn = QPushButton()
-        self.ScreenBtn.setGeometry(1, 1, 100, 50)
-        self.ScreenBtn.setText('screen')
+        self.ScreenBtn = QPushButton('screen', self)
+        self.ScreenBtn.setGeometry(QRect(10, 10, 100, 50))
+        self.ScreenBtn.clicked.connect(self.save_screenshot)
 
         # Пример данных и создание DataFrame
         data = {
@@ -378,8 +423,17 @@ class GraphicsReport_kach_kach_View(QDialog):
 
         layout = QVBoxLayout()
         layout.addWidget(sc)
+        layout.addWidget(self.ScreenBtn)
 
         self.setLayout(layout)
+
+    def save_screenshot(self):
+        os.makedirs("Graphics", exist_ok=True)
+        screenshot_path = os.path.join("Graphics", f"Кач-Кач_{self.first_param}-{self.second_param}.png")
+        # Делаем захват экрана
+        screenshot = self.grab()
+        # Сохраняем скриншот
+        screenshot.save(screenshot_path)
 
 
 # Окно с параметрами графического отчета №2
@@ -407,7 +461,11 @@ class GraphicsReport_kol_kach_View(QDialog):
         self.setWindowTitle('Количественный-Качественный')
         self.setGeometry(100, 100, 1000, 800)
 
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
+        sc = MplCanvas(self, width=10, height=8, dpi=100)
+
+        self.ScreenBtn = QPushButton('screen', self)
+        self.ScreenBtn.setGeometry(QRect(10, 10, 100, 50))
+        self.ScreenBtn.clicked.connect(self.save_screenshot)
 
         # Пример данных и создание DataFrame
         data = {
@@ -430,7 +488,16 @@ class GraphicsReport_kol_kach_View(QDialog):
 
         layout = QVBoxLayout()
         layout.addWidget(sc)
+        layout.addWidget(self.ScreenBtn)
+
         self.setLayout(layout)
+
+    def save_screenshot(self):
+        os.makedirs("Graphics", exist_ok=True)
+        screenshot_path = os.path.join("Graphics", f"Кол-Кач_{self.first_param}-{self.second_param}.png")
+        screenshot = self.grab()
+        screenshot.save(screenshot_path)
+        print(f"Screenshot saved to {screenshot_path}")
 
 
 if __name__ == "__main__":
