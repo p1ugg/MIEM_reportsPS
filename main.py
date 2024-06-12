@@ -174,7 +174,7 @@ class DatasetView(QDialog):
     def __init__(self, df):
         super().__init__()
         # Подрузка интерфейса
-        uic.loadUi('UI/dataset_.ui', self)
+        uic.loadUi('UI/dataset.ui', self)
 
         # Настройка QTableView
         self.dataset_view = self.findChild(QTableView, 'dataset_view')
