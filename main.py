@@ -10,14 +10,19 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from Scripts.text_reports import *
 
+# Открываем нашу БД
 BOOKS = pd.read_excel('./Data/data.xlsx')
 
 
+# Главное меню
 class MyWidget(QMainWindow):
     def __init__(self):
-        super().__init__()
-        uic.loadUi('Scripts/main.ui', self)
+        # Подгружаем интерфейс
 
+        super().__init__()
+        uic.loadUi('UI/main.ui', self)
+
+        # Подключаем кнопки нажатия на каждое меню
         self.graphic_report.clicked.connect(self.open_graphic_report)
 
         self.dataset_view = self.findChild(QPushButton, 'dataset_view')
@@ -26,23 +31,29 @@ class MyWidget(QMainWindow):
         self.text_reports = self.findChild(QPushButton, 'text_reports')
         self.text_reports.clicked.connect(self.open_text_reports)
 
+    # Функция, обрабатывающая нажатие кнопки "Датасет"
     def show_dataset_view(self):
         self.dataset_window = DatasetView(BOOKS)
         self.dataset_window.show()
 
+    # Функция, обрабатывающая нажатие кнопки "Графические отчеты"
     def open_graphic_report(self):
         self.graphic_window = GraphicReportView()
         self.graphic_window.show()
 
+    # Функция, обрабатывающая нажатие кнопки "Текстовые отчеты"
     def open_text_reports(self):
         self.text_reports_window = TextReportsView()
         self.text_reports_window.show()
 
 
+# Окно с текстовыми отчетами
 class TextReportsView(QDialog):
     def __init__(self):
+        # Подключаем кнопки нажатия на текстовые отчеты
         super().__init__()
-        uic.loadUi('Scripts/text_reports.ui', self)
+
+        uic.loadUi('UI/text_reports.ui', self)
         self.tr1 = self.findChild(QPushButton, 'tr1')
         self.tr1.clicked.connect(self.tr1_clicked)
 
@@ -55,54 +66,72 @@ class TextReportsView(QDialog):
         self.tr4 = self.findChild(QPushButton, 'tr4')
         self.tr4.clicked.connect(self.tr4_clicked)
 
+    # Функция, обрабатывающая нажатие на текстовый отчет №1
     def tr1_clicked(self):
         self.text_report1_view = TextReportView12(1)
         self.text_report1_view.show()
 
+    # Функция, обрабатывающая нажатие на текстовый отчет №2
     def tr2_clicked(self):
         self.text_report2_view = TextReportView12(2)
         self.text_report2_view.show()
 
+    # Функция, обрабатывающая нажатие на текстовый отчет №3
     def tr3_clicked(self):
         self.text_report3_view = TextReportView34(get_average_rating_by_country(BOOKS))
         self.text_report3_view.show()
 
+    # Функция, обрабатывающая нажатие на текстовый отчет №4
     def tr4_clicked(self):
         self.text_report4_view = TextReportView34(get_average_price_per_year(BOOKS, 2009, 2019))
         self.text_report4_view.show()
 
 
+# Окно, в котором отображаются текстовые отчеты №1 и №2
 class TextReportView12(QDialog):
     def __init__(self, num):
         super().__init__()
-        uic.loadUi('Scripts/text_report.ui', self)
+        # Подгружаем интерфейс с text_report.ui
+        uic.loadUi('UI/text_report.ui', self)
+        # Num - это номер отчета (1 или 2), который передали как параметр
         self.num = num
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
+    # Обратчик кнопки "Построить"
     def bulid_btn_clicked(self):
         # Настройка QTableView
+        # Берем N из ячейки
         N = self.nLine.toPlainText()
+
         try:
+            # Проверяем N на корректность
             if 2 <= int(N) <= 550:
                 self.text_report_view = self.findChild(QTableView, 'text_report_view')
+                """ Если все окей, то мы смотрим какой номер текстового отчета выбрал пользователь и в зависимости от
+                 этого получаем нужный датафрейм из скрипта text_reports.py"""
                 if self.num == 1:
                     self.df = get_most_expensive_books(BOOKS, int(N))
                 elif self.num == 2:
                     self.df = get_most_discussed_authors(BOOKS, int(N))
+                # Подгружаем окно где будет отображаться датафрейм
                 self.model = PandasModel(self.df)
                 self.text_report_view.setModel(self.model)
 
         except Exception as ex:
+            # Если ошибка в данных, то ничего не выводим
             pass
 
 
+# Окно, в котором отображаются текстовые отчеты №3 и №4
 class TextReportView34(QDialog):
     def __init__(self, df):
         super().__init__()
-        uic.loadUi('Scripts/text_report3.ui', self)
+        # Подгружаем интерфейс с text_report3.ui
+        uic.loadUi('UI/text_report3.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
         self.df = df
 
+    # Обратчик кнопки "Построить"
     def bulid_btn_clicked(self):
         # Настройка QTableView
         self.text_report_view = self.findChild(QTableView, 'text_report_view')
@@ -110,17 +139,21 @@ class TextReportView34(QDialog):
         self.text_report_view.setModel(self.model)
 
 
+# Это таблица, в которую вставляется датафрейм
 class PandasModel(QAbstractTableModel):
     def __init__(self, df=pd.DataFrame(), parent=None):
         super().__init__(parent)
         self._df = df
 
+    # Считаем количество строк
     def rowCount(self, parent=None):
         return self._df.shape[0]
 
+    # Считаем количество столбцов
     def columnCount(self, parent=None):
         return self._df.shape[1]
 
+    # Обрабаываем наш датафрейм
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
@@ -136,10 +169,12 @@ class PandasModel(QAbstractTableModel):
         return None
 
 
+# Окно, в котором отображается датафрейм
 class DatasetView(QDialog):
     def __init__(self, df):
         super().__init__()
-        uic.loadUi('Scripts/dataset_.ui', self)
+        # Подрузка интерфейса
+        uic.loadUi('UI/dataset_.ui', self)
 
         # Настройка QTableView
         self.dataset_view = self.findChild(QTableView, 'dataset_view')
@@ -147,36 +182,43 @@ class DatasetView(QDialog):
         self.dataset_view.setModel(self.model)
 
 
+# Окно с графическими отчетами
 class GraphicReportView(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('Scripts/graphic_reports.ui', self)
+        # Подгружаем интерфейс и подключаем кнопку для каждого отчета
+        uic.loadUi('UI/graphic_reports.ui', self)
         self.kach_kach.clicked.connect(self.kach_kach_clicked)
         self.kol_kach.clicked.connect(self.kol_kach_clicked)
         self.baw_kol_kach.clicked.connect(self.baw_kol_kach_clicked)
         self.twokol_kach.clicked.connect(self.twokol_kach_clicked)
 
+    # Функция, обрабатывающая нажатие на графический отчет №1
     def kach_kach_clicked(self):
         self.kach_kach_window = GraphicsReport_kach_kach()
         self.kach_kach_window.show()
 
+    # Функция, обрабатывающая нажатие на графический отчет №2
     def kol_kach_clicked(self):
         self.kol_kach_window = GraphicsReport_kol_kach()
         self.kol_kach_window.show()
 
+    # Функция, обрабатывающая нажатие на графический отчет №3
     def baw_kol_kach_clicked(self):
         self.baw_kol_kach_window = GraphicsReport_baw_kol_kach()
         self.baw_kol_kach_window.show()
 
+    # Функция, обрабатывающая нажатие на графический отчет №4
     def twokol_kach_clicked(self):
         self.twokol_kach_window = GraphicsReport_twokol_kach()
         self.twokol_kach_window.show()
 
 
+# Окно с параметрами графического отчета №4
 class GraphicsReport_twokol_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('Scripts/2kol_kach_window.ui', self)
+        uic.loadUi('UI/2kol_kach_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -187,7 +229,7 @@ class GraphicsReport_twokol_kach(QDialog):
         self.build_window.show()
 
 
-# Класс для отображения графика
+# Окно в котором отображается графический отчет №4
 class GraphicsReport_twokol_kach_View(QWidget):
     def __init__(self, first_param, second_param, third_param, parent=None):
         super().__init__(parent)
@@ -226,10 +268,11 @@ class GraphicsReport_twokol_kach_View(QWidget):
         self.canvas.draw()
 
 
+# Окно с параметрами графического отчета №3
 class GraphicsReport_baw_kol_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('Scripts/kol_kach_baw_window.ui', self)
+        uic.loadUi('UI/kol_kach_baw_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -240,7 +283,7 @@ class GraphicsReport_baw_kol_kach(QDialog):
         self.build_window.show()
 
 
-# Класс для отображения графика
+# Окно в котором отображается графический отчет №3
 class GraphicsReport_baw_kol_kach_View(QWidget):
     def __init__(self, first_param, second_param, parent=None):
         super().__init__(parent)
@@ -277,10 +320,11 @@ class GraphicsReport_baw_kol_kach_View(QWidget):
         self.canvas.draw()
 
 
+# Окно с параметрами графического отчета №1
 class GraphicsReport_kach_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('Scripts/kach_kach_window.ui', self)
+        uic.loadUi('UI/kach_kach_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -290,6 +334,7 @@ class GraphicsReport_kach_kach(QDialog):
         self.build_window.show()
 
 
+# Класс для добавления таблицы для отчета
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=10, height=8, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -297,6 +342,7 @@ class MplCanvas(FigureCanvas):
         super(MplCanvas, self).__init__(fig)
 
 
+# Окно в котором отображается графический отчет №1
 class GraphicsReport_kach_kach_View(QDialog):
     def __init__(self, first_param, second_param):
         super().__init__()
@@ -306,10 +352,11 @@ class GraphicsReport_kach_kach_View(QDialog):
         self.setWindowTitle('Качественный-Качественный')
         self.setGeometry(100, 100, 1000, 800)
 
+        sc = MplCanvas(self, width=10, height=8, dpi=100)
+
         self.ScreenBtn = QPushButton()
         self.ScreenBtn.setGeometry(1, 1, 100, 50)
         self.ScreenBtn.setText('screen')
-        sc = MplCanvas(self, width=10, height=8, dpi=100)
 
         # Пример данных и создание DataFrame
         data = {
@@ -335,10 +382,11 @@ class GraphicsReport_kach_kach_View(QDialog):
         self.setLayout(layout)
 
 
+# Окно с параметрами графического отчета №2
 class GraphicsReport_kol_kach(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('Scripts/kol_kach_window.ui', self)
+        uic.loadUi('UI/kol_kach_window.ui', self)
         self.bulid_btn.clicked.connect(self.bulid_btn_clicked)
 
     def bulid_btn_clicked(self):
@@ -349,6 +397,7 @@ class GraphicsReport_kol_kach(QDialog):
         self.build_window.show()
 
 
+# Окно в котором отображается графический отчет №2
 class GraphicsReport_kol_kach_View(QDialog):
     def __init__(self, first_param, second_param):
         super().__init__()
